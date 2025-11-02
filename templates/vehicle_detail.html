@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }} - Kario Garage{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>Detalhes do Veículo</h4>
+    <div>
+        <a href="{% url 'vehicle_edit' vehicle.id %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil"></i>
+        </a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</h5>
+        {% if vehicle.trim %}
+        <p class="text-muted">{{ vehicle.trim }}</p>
+        {% endif %}
+        
+        <div class="mb-3">
+            {% if vehicle.status == 'DISPONIVEL' %}
+                <span class="badge bg-success">Disponível</span>
+            {% elif vehicle.status == 'VENDIDO' %}
+                <span class="badge bg-danger">Vendido</span>
+            {% elif vehicle.status == 'MECANICA' %}
+                <span class="badge bg-warning text-dark">Mecânica</span>
+            {% else %}
+                <span class="badge bg-info text-dark">Falta Inspeção</span>
+            {% endif %}
+            
+            {% if vehicle.title_status == 'LIMPO' %}
+                <span class="badge bg-primary">Título Limpo</span>
+            {% else %}
+                <span class="badge bg-secondary">{{ vehicle.title_status }}</span>
+            {% endif %}
+        </div>
+        
+        {% if vehicle.status != 'DISPONIVEL' and vehicle.status != 'VENDIDO' %}
+        <div class="alert alert-warning">
+            <strong>Progresso da Ficha Técnica: {{ vehicle.inspection_progress }}%</strong>
+            <div class="progress mt-2" style="height: 25px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated {% if vehicle.inspection_progress == 100 %}bg-success{% endif %}" role="progressbar" 
+                     style="width: {{ vehicle.inspection_progress }}%;" 
+                     aria-valuenow="{{ vehicle.inspection_progress }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ vehicle.inspection_progress }}%
+                </div>
+            </div>
+            <small class="d-block mt-2">Complete a ficha técnica para tornar o veículo disponível</small>
+        </div>
+        {% endif %}
+
+        {% if vehicle.general_notes %}
+        <div class="alert alert-light border">
+            <strong><i class="bi bi-chat-left-text"></i> Observações Gerais:</strong><br>
+            <p class="mb-0 mt-2">{{ vehicle.general_notes }}</p>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-6">
+                <p class="mb-2"><strong>VIN:</strong><br>{{ vehicle.vin|default:"N/A" }}</p>
+                <p class="mb-2"><strong>Motor:</strong><br>{{ vehicle.engine|default:"N/A" }}</p>
+                <p class="mb-2"><strong>Transmissão:</strong><br>{{ vehicle.transmission|default:"N/A" }}</p>
+                <p class="mb-2"><strong>Tração:</strong><br>{{ vehicle.train|default:"N/A" }}</p>
+            </div>
+            <div class="col-6">
+                <p class="mb-2"><strong>Cor Externa:</strong><br>{{ vehicle.exterior_color }}</p>
+                <p class="mb-2"><strong>Cor Interna:</strong><br>{{ vehicle.interior_color }}</p>
+                <p class="mb-2"><strong>Milhas:</strong><br>{{ vehicle.miles|floatformat:0 }}</p>
+                <p class="mb-2"><strong>MPG:</strong><br>{{ vehicle.mpg|default:"N/A" }}</p>
+            </div>
+        </div>
+
+        <p class="mb-2"><strong>Valor:</strong> ${{ vehicle.value|floatformat:2 }}</p>
+
+        {% if vehicle.title_status != 'LIMPO' and vehicle.title_problem_description %}
+        <div class="alert alert-warning mt-3">
+            <strong>Problema no Título:</strong><br>
+            {{ vehicle.title_problem_description }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Fotos do Veículo ({{ photos.count }})</strong>
+        <a href="{% url 'photo_upload' vehicle.id %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-camera"></i> Adicionar
+        </a>
+    </div>
+    <div class="card-body">
+        {% if photos %}
+        <div class="row g-2">
+            {% for photo in photos %}
+            <div class="col-6 col-md-4">
+                <div class="position-relative">
+                    <img src="{{ photo.image.url }}" class="img-fluid rounded" alt="Foto do veículo" style="width: 100%; height: 150px; object-fit: cover;">
+                    <form method="POST" action="{% url 'photo_delete' photo.id %}" class="position-absolute top-0 end-0 m-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remover esta foto?')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    {% if photo.description %}
+                    <small class="d-block text-muted mt-1">{{ photo.description }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted text-center mb-0">Nenhuma foto adicionada</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Ficha Técnica de Inspeção</strong>
+        <a href="{% url 'inspection_update' vehicle.id %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="list-group list-group-flush">
+            {% for inspection in inspections %}
+            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                <span style="font-size: 14px;">{{ inspection.template.item_name }}</span>
+                {% if inspection.status == 'SIM' %}
+                    <span class="badge bg-success">Sim</span>
+                {% elif inspection.status == 'NAO' %}
+                    <span class="badge bg-danger">Não</span>
+                {% else %}
+                    <span class="badge bg-secondary">N/R</span>
+                {% endif %}
+            </div>
+            {% if inspection.observation %}
+            <small class="text-muted d-block mb-2 px-0">💬 {{ inspection.observation }}</small>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if vehicle.status == 'DISPONIVEL' %}
+<div class="d-grid gap-2">
+    <a href="{% url 'vehicle_sell' vehicle.id %}" class="btn btn-success">
+        <i class="bi bi-cash"></i> Vender Veículo
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

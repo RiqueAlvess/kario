@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Kario Garage{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">Dashboard</h4>
+
+<div class="row">
+    <div class="col-6 col-md-4">
+        <div class="card stat-card bg-success text-white">
+            <h3>{{ totals.disponivel }}</h3>
+            <p class="text-white fw-bold">Disponível</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card stat-card bg-info text-white">
+            <h3>{{ totals.falta_inspecao }}</h3>
+            <p class="text-white fw-bold">Falta Inspeção</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card stat-card bg-warning text-dark">
+            <h3>{{ totals.mecanica }}</h3>
+            <p class="text-dark fw-bold">Mecânica</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card stat-card bg-danger text-white">
+            <h3>{{ totals.vendido }}</h3>
+            <p class="text-white fw-bold">Vendido</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card stat-card bg-primary text-white">
+            <h3>{{ totals.limpo }}</h3>
+            <p class="text-white fw-bold">Título Limpo</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card stat-card bg-secondary text-white">
+            <h3>{{ totals.nao_limpo }}</h3>
+            <p class="text-white fw-bold">Título Problema</p>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Vendas por Mês</h5>
+        <canvas id="salesChart" height="100"></canvas>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Vendas',
+                data: {{ chart_data|safe }},
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Veículos - Kario Garage{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>Veículos</h4>
+    <a href="{% url 'decode_vin' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus"></i> Adicionar
+    </a>
+</div>
+
+<form method="GET" class="mb-3">
+    <div class="input-group mb-2">
+        <input type="text" name="search" class="form-control" placeholder="Buscar por marca, modelo ou VIN..." value="{{ search }}">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-search"></i>
+        </button>
+    </div>
+    
+    <div class="row g-2">
+        <div class="col-6">
+            <select name="make" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Todas Marcas</option>
+                {% for make in makes %}
+                <option value="{{ make }}" {% if make == make_filter %}selected{% endif %}>{{ make }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6">
+            <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Todos Anos</option>
+                {% for year in years %}
+                <option value="{{ year }}" {% if year|stringformat:"s" == year_filter %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6">
+            <select name="title_status" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Todos Títulos</option>
+                <option value="LIMPO" {% if title_filter == 'LIMPO' %}selected{% endif %}>Limpo</option>
+                <option value="SALVAGE" {% if title_filter == 'SALVAGE' %}selected{% endif %}>Salvage</option>
+                <option value="REBUILT" {% if title_filter == 'REBUILT' %}selected{% endif %}>Rebuilt</option>
+                <option value="OUTROS" {% if title_filter == 'OUTROS' %}selected{% endif %}>Outros</option>
+            </select>
+        </div>
+        <div class="col-6">
+            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Todos Status</option>
+                <option value="FALTA_INSPECAO" {% if status_filter == 'FALTA_INSPECAO' %}selected{% endif %}>Falta Inspeção</option>
+                <option value="DISPONIVEL" {% if status_filter == 'DISPONIVEL' %}selected{% endif %}>Disponível</option>
+                <option value="MECANICA" {% if status_filter == 'MECANICA' %}selected{% endif %}>Mecânica</option>
+                <option value="VENDIDO" {% if status_filter == 'VENDIDO' %}selected{% endif %}>Vendido</option>
+            </select>
+        </div>
+        <div class="col-6">
+            <input type="number" name="value_min" class="form-control form-control-sm" placeholder="Valor mín ($)" value="{{ value_min }}" step="0.01">
+        </div>
+        <div class="col-6">
+            <input type="number" name="value_max" class="form-control form-control-sm" placeholder="Valor máx ($)" value="{{ value_max }}" step="0.01">
+        </div>
+    </div>
+    
+    <div class="mt-2 d-flex gap-2">
+        <button type="submit" class="btn btn-sm btn-primary">
+            <i class="bi bi-funnel"></i> Filtrar
+        </button>
+        {% if search or make_filter or year_filter or title_filter or status_filter or value_min or value_max %}
+        <a href="{% url 'vehicle_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x"></i> Limpar
+        </a>
+        {% endif %}
+    </div>
+</form>
+
+{% if vehicles %}
+    <p class="text-muted mb-3">{{ vehicles.count }} veículo(s) encontrado(s)</p>
+    {% for vehicle in vehicles %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-4">
+                    {% if vehicle.photos.first %}
+                        <img src="{{ vehicle.photos.first.image.url }}" class="img-fluid rounded" alt="{{ vehicle.make }} {{ vehicle.model }}" style="width: 100%; height: 120px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white" style="width: 100%; height: 120px;">
+                            <i class="bi bi-camera" style="font-size: 40px;"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-8">
+                    <h5 class="card-title mb-1">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</h5>
+                    <p class="text-muted mb-2" style="font-size: 12px;">
+                        {% if vehicle.vin %}VIN: {{ vehicle.vin }}{% else %}Sem VIN{% endif %}
+                    </p>
+                    <div class="mb-2">
+                        {% if vehicle.status == 'DISPONIVEL' %}
+                            <span class="badge bg-success">Disponível</span>
+                        {% elif vehicle.status == 'VENDIDO' %}
+                            <span class="badge bg-danger">Vendido</span>
+                        {% elif vehicle.status == 'MECANICA' %}
+                            <span class="badge bg-warning text-dark">Mecânica</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">Falta Inspeção</span>
+                        {% endif %}
+                        
+                        {% if vehicle.title_status == 'LIMPO' %}
+                            <span class="badge bg-primary">Limpo</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ vehicle.title_status }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if vehicle.status != 'DISPONIVEL' and vehicle.status != 'VENDIDO' %}
+                    <div class="progress mb-2" style="height: 18px;">
+                        <div class="progress-bar {% if vehicle.inspection_progress == 100 %}bg-success{% endif %}" role="progressbar" 
+                             style="width: {{ vehicle.inspection_progress }}%;" 
+                             aria-valuenow="{{ vehicle.inspection_progress }}" aria-valuemin="0" aria-valuemax="100">
+                            <small>{{ vehicle.inspection_progress }}%</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if vehicle.general_notes %}
+                    <p class="mb-2" style="font-size: 12px;">
+                        <i class="bi bi-chat-left-text text-muted"></i> 
+                        <em>{{ vehicle.general_notes|truncatewords:10 }}</em>
+                    </p>
+                    {% endif %}
+                    
+                    <p class="mb-0" style="font-size: 13px;">
+                        <strong>${{ vehicle.value|floatformat:2 }}</strong> • {{ vehicle.miles|floatformat:0 }} mi
+                    </p>
+                    <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-primary btn-sm mt-2 w-100">
+                        <i class="bi bi-eye"></i> Ver Detalhes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle me-2"></i>Nenhum veículo encontrado
+    </div>
+{% endif %}
+{% endblock %}

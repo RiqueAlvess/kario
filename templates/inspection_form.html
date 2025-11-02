@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Ficha Técnica - {{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">Ficha Técnica de Inspeção</h4>
+
+<div class="alert alert-info">
+    <strong>{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</strong><br>
+    <small>Progresso: {{ vehicle.inspection_progress }}%</small>
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+    
+    <div class="card mb-3">
+        <div class="card-header"><strong>Checklist de Inspeção</strong></div>
+        <div class="card-body">
+            {% for inspection in inspections %}
+            <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                <label class="form-label fw-bold" style="font-size: 14px;">{{ inspection.template.item_name }}</label>
+                <div class="btn-group w-100 mb-2" role="group">
+                    <input type="radio" class="btn-check" name="status_{{ inspection.id }}" id="sim_{{ inspection.id }}" value="SIM" {% if inspection.status == 'SIM' %}checked{% endif %}>
+                    <label class="btn btn-outline-success" for="sim_{{ inspection.id }}">Sim</label>
+                    
+                    <input type="radio" class="btn-check" name="status_{{ inspection.id }}" id="nao_{{ inspection.id }}" value="NAO" {% if inspection.status == 'NAO' %}checked{% endif %}>
+                    <label class="btn btn-outline-danger" for="nao_{{ inspection.id }}">Não</label>
+                    
+                    <input type="radio" class="btn-check" name="status_{{ inspection.id }}" id="nr_{{ inspection.id }}" value="NAO_RESPONDIDO" {% if inspection.status == 'NAO_RESPONDIDO' %}checked{% endif %}>
+                    <label class="btn btn-outline-secondary" for="nr_{{ inspection.id }}">N/R</label>
+                </div>
+                <textarea name="obs_{{ inspection.id }}" class="form-control form-control-sm" rows="2" placeholder="Observações (opcional)">{{ inspection.observation }}</textarea>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 mb-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Salvar Ficha Técnica
+        </button>
+        <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+    </div>
+</form>
+
+{% endblock %}

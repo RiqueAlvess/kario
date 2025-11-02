@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Adicionar Fotos - Kario Garage{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">Adicionar Fotos</h4>
+
+<div class="alert alert-info">
+    <strong>{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</strong>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Selecione as Fotos *</label>
+                <input type="file" name="photos" class="form-control" accept="image/*" multiple required>
+                <small class="text-muted">Você pode selecionar múltiplas fotos</small>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Descrição (opcional)</label>
+                <input type="text" name="description" class="form-control" placeholder="Ex: Foto frontal, interior, etc.">
+            </div>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 mb-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload"></i> Adicionar Fotos
+        </button>
+        <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+    </div>
+</form>
+
+{% endblock %}

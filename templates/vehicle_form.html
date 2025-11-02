@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if vehicle %}Editar{% else %}Adicionar{% endif %} Veículo - Kario Garage{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">{% if vehicle %}Editar{% else %}Adicionar{% endif %} Veículo</h4>
+
+<form method="POST">
+    {% csrf_token %}
+    
+    <div class="card mb-3">
+        <div class="card-header"><strong>Informações Básicas</strong></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Ano *</label>
+                    <input type="number" name="year" class="form-control" value="{% if vehicle %}{{ vehicle.year }}{% else %}{{ vehicle_data.year }}{% endif %}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">VIN</label>
+                    <input type="text" name="vin" class="form-control" value="{% if vehicle %}{{ vehicle.vin }}{% else %}{{ vehicle_data.vin }}{% endif %}" maxlength="17">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Marca *</label>
+                    <input type="text" name="make" class="form-control" value="{% if vehicle %}{{ vehicle.make }}{% else %}{{ vehicle_data.make }}{% endif %}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Modelo *</label>
+                    <input type="text" name="model" class="form-control" value="{% if vehicle %}{{ vehicle.model }}{% else %}{{ vehicle_data.model }}{% endif %}" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Trim</label>
+                <input type="text" name="trim" class="form-control" value="{% if vehicle %}{{ vehicle.trim }}{% else %}{{ vehicle_data.trim }}{% endif %}">
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><strong>Especificações</strong></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Motor</label>
+                <input type="text" name="engine" class="form-control" value="{% if vehicle %}{{ vehicle.engine }}{% else %}{{ vehicle_data.engine }}{% endif %}">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Transmissão</label>
+                <input type="text" name="transmission" class="form-control" value="{% if vehicle %}{{ vehicle.transmission }}{% else %}{{ vehicle_data.transmission }}{% endif %}">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Tração</label>
+                <input type="text" name="train" class="form-control" value="{% if vehicle %}{{ vehicle.train }}{% endif %}">
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Cor Externa *</label>
+                    <input type="text" name="exterior_color" class="form-control" value="{% if vehicle %}{{ vehicle.exterior_color }}{% endif %}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Cor Interna *</label>
+                    <input type="text" name="interior_color" class="form-control" value="{% if vehicle %}{{ vehicle.interior_color }}{% endif %}" required>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Milhas *</label>
+                    <input type="number" name="miles" class="form-control" value="{% if vehicle %}{{ vehicle.miles }}{% endif %}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">MPG</label>
+                    <input type="text" name="mpg" class="form-control" value="{% if vehicle %}{{ vehicle.mpg }}{% endif %}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><strong>Título e Valor</strong></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Status do Título *</label>
+                <select name="title_status" class="form-select" id="titleStatus" required>
+                    <option value="LIMPO" {% if vehicle.title_status == 'LIMPO' %}selected{% endif %}>Limpo</option>
+                    <option value="SALVAGE" {% if vehicle.title_status == 'SALVAGE' %}selected{% endif %}>Salvage</option>
+                    <option value="REBUILT" {% if vehicle.title_status == 'REBUILT' %}selected{% endif %}>Rebuilt</option>
+                    <option value="OUTROS" {% if vehicle.title_status == 'OUTROS' %}selected{% endif %}>Outros</option>
+                </select>
+            </div>
+            
+            <div class="mb-3" id="problemDescription" {% if not vehicle or vehicle.title_status == 'LIMPO' %}style="display:none;"{% endif %}>
+                <label class="form-label">Descrição do Problema</label>
+                <textarea name="title_problem_description" class="form-control" rows="3">{% if vehicle %}{{ vehicle.title_problem_description }}{% endif %}</textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Valor *</label>
+                <input type="number" name="value" class="form-control" step="0.01" value="{% if vehicle %}{{ vehicle.value }}{% endif %}" required>
+            </div>
+            
+            {% if vehicle %}
+            <div class="mb-3">
+                <label class="form-label">Status *</label>
+                <select name="status" class="form-select" required>
+                    <option value="FALTA_INSPECAO" {% if vehicle.status == 'FALTA_INSPECAO' %}selected{% endif %}>Falta Inspeção</option>
+                    <option value="DISPONIVEL" {% if vehicle.status == 'DISPONIVEL' %}selected{% endif %}>Disponível</option>
+                    <option value="MECANICA" {% if vehicle.status == 'MECANICA' %}selected{% endif %}>Em Mecânica</option>
+                    <option value="VENDIDO" {% if vehicle.status == 'VENDIDO' %}selected{% endif %}>Vendido</option>
+                </select>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><strong>Observações Gerais</strong></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Anotações sobre o veículo</label>
+                <textarea name="general_notes" class="form-control" rows="4" placeholder="Ex: Precisa trocar bateria, arranhar no para-choque...">{% if vehicle %}{{ vehicle.general_notes }}{% endif %}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 mb-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Salvar
+        </button>
+        <a href="{% if vehicle %}{% url 'vehicle_detail' vehicle.id %}{% else %}{% url 'vehicle_list' %}{% endif %}" class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('titleStatus').addEventListener('change', function() {
+        const problemDiv = document.getElementById('problemDescription');
+        if (this.value === 'LIMPO') {
+            problemDiv.style.display = 'none';
+        } else {
+            problemDiv.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Decodificar VIN - Kario Garage{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">Adicionar Veículo</h4>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Opção 1: Decodificar VIN</h5>
+        <p class="text-muted">Insira o VIN para buscar informações automaticamente</p>
+        
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">VIN (17 caracteres)</label>
+                <input type="text" name="vin" class="form-control" maxlength="17" placeholder="Ex: 1HGBH41JXMN109186" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ano do Modelo</label>
+                <input type="number" name="year" class="form-control" placeholder="Ex: 2021" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Buscar Informações
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Opção 2: Adicionar Manualmente</h5>
+        <p class="text-muted">Preencha as informações do veículo sem usar VIN</p>
+        <a href="{% url 'vehicle_add' %}" class="btn btn-outline-primary w-100">
+            <i class="bi bi-pencil"></i> Adicionar Manualmente
+        </a>
+    </div>
+</div>
+
+{% endblock %}

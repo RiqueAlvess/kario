@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Vender Veículo - Kario Garage{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">Vender Veículo</h4>
+
+<div class="alert alert-info">
+    <strong>{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</strong><br>
+    VIN: {{ vehicle.vin|default:"N/A" }}<br>
+    Valor Atual: ${{ vehicle.value|floatformat:2 }}
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+    
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Preço de Venda *</label>
+                <input type="number" name="sale_price" class="form-control" step="0.01" value="{{ vehicle.value }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Data da Venda *</label>
+                <input type="date" name="sale_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Nome do Comprador</label>
+                <input type="text" name="buyer_name" class="form-control">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea name="notes" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 mb-4">
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-cash"></i> Confirmar Venda
+        </button>
+        <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+    </div>
+</form>
+
+{% endblock %}
