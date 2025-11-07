@@ -90,7 +90,8 @@ class Photo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='photos', null=True, blank=True)
     inspection = models.ForeignKey(VehicleInspection, on_delete=models.CASCADE, related_name='photos', null=True, blank=True)
-    image = models.ImageField(upload_to='vehicles/%Y/%m/')
+    image_url = models.URLField(max_length=500)
+    cloudinary_public_id = models.CharField(max_length=255, blank=True, null=True)
     description = models.CharField(max_length=200, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     

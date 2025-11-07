@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from datetime import datetime
 import requests
 import csv
+import cloudinary.uploader
 from .models import Vehicle, InspectionTemplate, VehicleInspection, Photo, Sale
 
 def login_view(request):
@@ -274,12 +275,25 @@ def photo_upload(request, pk):
     if request.method == 'POST':
         files = request.FILES.getlist('photos')
         description = request.POST.get('description', '')
+        
         for file in files:
-            Photo.objects.create(
-                vehicle=vehicle,
-                image=file,
-                description=description
-            )
+            try:
+                upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=f"kario_garage/vehicles/{vehicle.id}",
+                    resource_type="auto"
+                )
+                
+                Photo.objects.create(
+                    vehicle=vehicle,
+                    image_url=upload_result['secure_url'],
+                    cloudinary_public_id=upload_result['public_id'],
+                    description=description
+                )
+            except Exception as e:
+                messages.error(request, f'Erro ao fazer upload da imagem: {str(e)}')
+                continue
+        
         messages.success(request, f'{len(files)} foto(s) adicionada(s)!')
         return redirect('vehicle_detail', pk=vehicle.id)
     
@@ -289,6 +303,13 @@ def photo_upload(request, pk):
 def photo_delete(request, pk):
     photo = get_object_or_404(Photo, pk=pk)
     vehicle_id = photo.vehicle.id
+    
+    try:
+        if photo.cloudinary_public_id:
+            cloudinary.uploader.destroy(photo.cloudinary_public_id)
+    except Exception as e:
+        messages.warning(request, f'Foto removida do banco, mas erro ao deletar do Cloudinary: {str(e)}')
+    
     photo.delete()
     messages.success(request, 'Foto removida!')
     return redirect('vehicle_detail', pk=vehicle_id)
