@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 from django.http import HttpResponse
 from datetime import datetime
 import requests
@@ -67,11 +68,13 @@ def dashboard(request):
         else:
             fichas_incompletas += 1
     
-    sales_by_month = Sale.objects.extra(
-        select={'month': "TO_CHAR(sale_date, 'YYYY-MM')"}
+    # Agrupar vendas por mês (compatível com SQLite e PostgreSQL)
+    sales_by_month = Sale.objects.annotate(
+        month=TruncMonth('sale_date')
     ).values('month').annotate(total=Count('id')).order_by('month')
-    
-    chart_labels = [s['month'] for s in sales_by_month]
+
+    # Formatar labels no formato YYYY-MM
+    chart_labels = [s['month'].strftime('%Y-%m') if s['month'] else '' for s in sales_by_month]
     chart_data = [s['total'] for s in sales_by_month]
     
     context = {
