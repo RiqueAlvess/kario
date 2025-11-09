@@ -359,19 +359,22 @@ def photo_upload(request, pk):
 
         for file in files:
             try:
+                # Upload to Cloudinary FIRST (before reading the file for local storage)
+                upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=f"kario_garage/vehicles/{vehicle.id}",
+                    resource_type="auto"
+                )
+
+                # Reset file pointer to beginning before saving locally
+                file.seek(0)
+
                 # Save to local storage
                 local_path = save_image_locally(file, vehicle, file.name)
 
                 if not local_path:
                     messages.error(request, f'Erro ao salvar imagem localmente: {file.name}')
                     continue
-
-                # Upload to Cloudinary (keeping this for web viewing)
-                upload_result = cloudinary.uploader.upload(
-                    file,
-                    folder=f"kario_garage/vehicles/{vehicle.id}",
-                    resource_type="auto"
-                )
 
                 Photo.objects.create(
                     vehicle=vehicle,
