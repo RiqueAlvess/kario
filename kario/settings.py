@@ -1,7 +1,6 @@
 from pathlib import Path
 from decouple import config
 import dj_database_url
-import cloudinary
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,7 +16,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_filters',
-    'cloudinary',
     'garage',
 ]
 
@@ -84,10 +82,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
-
-cloudinary.config(
-    cloud_name="dsigskhqn",
-    api_key="851928391636449",
-    api_secret="yFosuERlsbaky-QBdUXkHwtFkWo",
-    secure=True
-)

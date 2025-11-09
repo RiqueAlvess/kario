@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from datetime import datetime
 import requests
 import csv
-import cloudinary.uploader
+# Cloudinary removed - using only Google Drive
 from .models import Vehicle, InspectionTemplate, VehicleInspection, Photo, Sale
 from .filters import VehicleFilter
 from googleapiclient.discovery import build
@@ -312,34 +312,43 @@ def inspection_update(request, pk):
 
 def get_or_create_drive_folder(service, vehicle):
     """
-    Create or get Google Drive folder for vehicle
+    Create or get Google Drive folder for vehicle in Shared Drive
     Folder name format: Nome_Modelo_Ano (e.g., Toyota_Camry_2020)
     """
     folder_name = f"{vehicle.make}_{vehicle.model}_{vehicle.year}"
 
-    # Search for existing folder
+    # Search for existing folder in Shared Drive
     query = f"name='{folder_name}' and '{GOOGLE_DRIVE_FOLDER_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"
     try:
-        results = service.files().list(q=query, fields='files(id, name)').execute()
+        results = service.files().list(
+            q=query,
+            fields='files(id, name)',
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True
+        ).execute()
         folders = results.get('files', [])
 
         if folders:
             return folders[0]['id']
 
-        # Create new folder
+        # Create new folder in Shared Drive
         folder_metadata = {
             'name': folder_name,
             'mimeType': 'application/vnd.google-apps.folder',
             'parents': [GOOGLE_DRIVE_FOLDER_ID]
         }
-        folder = service.files().create(body=folder_metadata, fields='id').execute()
+        folder = service.files().create(
+            body=folder_metadata,
+            fields='id',
+            supportsAllDrives=True
+        ).execute()
         return folder.get('id')
     except Exception as e:
         print(f"Error creating/getting Google Drive folder: {e}")
         return None
 
 def upload_to_drive(service, file, folder_id, filename):
-    """Upload file to Google Drive"""
+    """Upload file to Google Drive Shared Drive"""
     try:
         from googleapiclient.http import MediaIoBaseUpload
         import io
@@ -361,10 +370,28 @@ def upload_to_drive(service, file, folder_id, filename):
         uploaded_file = service.files().create(
             body=file_metadata,
             media_body=media,
-            fields='id, webViewLink'
+            fields='id, webViewLink, webContentLink',
+            supportsAllDrives=True
         ).execute()
 
-        return uploaded_file.get('id')
+        # Make file publicly accessible
+        try:
+            permission = {
+                'type': 'anyone',
+                'role': 'reader'
+            }
+            service.permissions().create(
+                fileId=uploaded_file.get('id'),
+                body=permission,
+                supportsAllDrives=True
+            ).execute()
+        except Exception as perm_error:
+            print(f"Warning: Could not set public permissions: {perm_error}")
+
+        return {
+            'id': uploaded_file.get('id'),
+            'url': uploaded_file.get('webViewLink')
+        }
     except Exception as e:
         print(f"Error uploading to Google Drive: {e}")
         return None
@@ -380,39 +407,40 @@ def photo_upload(request, pk):
 
         # Initialize Google Drive service
         drive_service = get_drive_service()
-        drive_folder_id = None
 
-        if drive_service:
-            drive_folder_id = get_or_create_drive_folder(drive_service, vehicle)
+        if not drive_service:
+            messages.error(request, 'Erro: Serviço do Google Drive não disponível')
+            return redirect('vehicle_detail', pk=vehicle.id)
 
+        drive_folder_id = get_or_create_drive_folder(drive_service, vehicle)
+
+        if not drive_folder_id:
+            messages.error(request, 'Erro ao criar/acessar pasta no Google Drive')
+            return redirect('vehicle_detail', pk=vehicle.id)
+
+        upload_count = 0
         for file in files:
             try:
-                # Upload to Cloudinary
-                upload_result = cloudinary.uploader.upload(
-                    file,
-                    folder=f"kario_garage/vehicles/{vehicle.id}",
-                    resource_type="auto"
-                )
+                # Upload ONLY to Google Drive (Shared Drive)
+                upload_result = upload_to_drive(drive_service, file, drive_folder_id, file.name)
 
-                google_drive_id = None
-
-                # Upload to Google Drive
-                if drive_service and drive_folder_id:
-                    google_drive_id = upload_to_drive(drive_service, file, drive_folder_id, file.name)
-
-                Photo.objects.create(
-                    vehicle=vehicle,
-                    image_url=upload_result['secure_url'],
-                    cloudinary_public_id=upload_result['public_id'],
-                    google_drive_id=google_drive_id,
-                    description=description,
-                    uploaded_by=request.user
-                )
+                if upload_result:
+                    Photo.objects.create(
+                        vehicle=vehicle,
+                        image_url=upload_result['url'],
+                        google_drive_id=upload_result['id'],
+                        description=description,
+                        uploaded_by=request.user
+                    )
+                    upload_count += 1
+                else:
+                    messages.warning(request, f'Falha ao fazer upload de {file.name}')
             except Exception as e:
-                messages.error(request, f'Erro ao fazer upload da imagem: {str(e)}')
+                messages.error(request, f'Erro ao fazer upload de {file.name}: {str(e)}')
                 continue
 
-        messages.success(request, f'{len(files)} foto(s) adicionada(s)!')
+        if upload_count > 0:
+            messages.success(request, f'{upload_count} foto(s) adicionada(s) ao Google Drive!')
         return redirect('vehicle_detail', pk=vehicle.id)
 
     return render(request, 'photo_upload.html', {'vehicle': vehicle})
@@ -423,20 +451,17 @@ def photo_delete(request, pk):
     photo = get_object_or_404(Photo, pk=pk)
     vehicle_id = photo.vehicle.id
 
-    try:
-        if photo.cloudinary_public_id:
-            cloudinary.uploader.destroy(photo.cloudinary_public_id)
-    except Exception as e:
-        messages.warning(request, f'Foto removida do banco, mas erro ao deletar do Cloudinary: {str(e)}')
-
-    # Delete from Google Drive if exists
+    # Delete from Google Drive
     if photo.google_drive_id:
         try:
             drive_service = get_drive_service()
             if drive_service:
-                drive_service.files().delete(fileId=photo.google_drive_id).execute()
+                drive_service.files().delete(
+                    fileId=photo.google_drive_id,
+                    supportsAllDrives=True
+                ).execute()
         except Exception as e:
-            print(f"Error deleting from Google Drive: {e}")
+            messages.warning(request, f'Foto removida do banco, mas erro ao deletar do Google Drive: {str(e)}')
 
     photo.delete()
     messages.success(request, 'Foto removida!')
