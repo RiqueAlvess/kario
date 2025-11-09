@@ -104,13 +104,12 @@ class Photo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='photos', null=True, blank=True)
     inspection = models.ForeignKey(VehicleInspection, on_delete=models.CASCADE, related_name='photos', null=True, blank=True)
-    image_url = models.URLField(max_length=500)
-    cloudinary_public_id = models.CharField(max_length=255, blank=True, null=True)
-    google_drive_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='ID do Google Drive')
+    image_url = models.URLField(max_length=500, verbose_name='URL do Google Drive')
+    google_drive_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='ID do Google Drive')
     description = models.CharField(max_length=200, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='uploaded_photos', verbose_name='Enviado por')
-    
+
     def __str__(self):
         return f"Photo {self.id}"
 
