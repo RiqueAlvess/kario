@@ -37,13 +37,23 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-### 5. Crie um superusuário (opcional, para acessar o admin)
+### 5. Popule os templates de inspeção
+
+**OBRIGATÓRIO:** Crie os itens do checklist de inspeção (44 itens):
+
+```bash
+python manage.py populate_inspection
+```
+
+Este comando cria todos os itens do checklist de inspeção que aparecerão na ficha técnica de cada veículo.
+
+### 6. Crie um superusuário (opcional, para acessar o admin)
 
 ```bash
 python manage.py createsuperuser
 ```
 
-### 6. Execute o servidor
+### 7. Execute o servidor
 
 Para desenvolvimento:
 ```bash
@@ -56,6 +66,26 @@ Para produção com Gunicorn:
 ```
 
 ## Problemas Comuns
+
+### Checklist de Inspeção Vazio
+
+Se a ficha técnica de inspeção não mostrar as perguntas (aparece vazio), você precisa popular os templates:
+
+```bash
+# Ative o ambiente virtual
+source venv/bin/activate
+
+# Popule os templates de inspeção
+python manage.py populate_inspection
+```
+
+Este comando cria 44 itens de inspeção que incluem verificações de:
+- Pintura, vidros e lataria
+- Pneus, rodas e componentes externos
+- Motor e fluidos
+- Interior e limpeza
+- Eletrônicos e funcionalidades
+- Sistema de segurança
 
 ### Erro: "no such table: garage_vehicle"
 

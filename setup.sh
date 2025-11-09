@@ -34,6 +34,11 @@ python manage.py migrate
 echo "✓ Banco de dados configurado"
 
 echo ""
+echo "Populando templates de inspeção..."
+python manage.py populate_inspection
+echo "✓ Templates de inspeção criados"
+
+echo ""
 echo "=========================================="
 echo "  Configuração concluída com sucesso!"
 echo "=========================================="
