@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+"""python manage.py populate_inspection"""
 import os
 import sys
 
