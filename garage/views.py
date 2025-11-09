@@ -16,7 +16,7 @@ import shutil
 
 # Local storage setup
 BASE_DIR = Path(__file__).resolve().parent.parent
-LOCAL_IMAGES_DIR = Path("C:/imagens_kario")
+LOCAL_IMAGES_DIR = BASE_DIR / "media" / "images"
 
 def ensure_local_images_dir():
     """Ensure local images directory exists"""
@@ -304,7 +304,7 @@ def inspection_update(request, pk):
 
 def save_image_locally(file, vehicle, filename):
     """
-    Save image to local directory C:/imagens_kario/
+    Save image to local directory media/images/
     Filename format: NomeCarro_Ano_Modelo_originalname.ext
     Returns the local file path or None if failed
     """
@@ -385,7 +385,7 @@ def photo_upload(request, pk):
                 messages.error(request, f'Erro ao fazer upload da imagem: {str(e)}')
                 continue
 
-        messages.success(request, f'{len(files)} foto(s) adicionada(s) e salvas em C:/imagens_kario/')
+        messages.success(request, f'{len(files)} foto(s) adicionada(s) e salvas em media/images/')
         return redirect('vehicle_detail', pk=vehicle.id)
 
     return render(request, 'photo_upload.html', {'vehicle': vehicle})
