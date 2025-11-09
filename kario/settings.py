@@ -1,13 +1,12 @@
 from pathlib import Path
 from decouple import config
-import dj_database_url
 import cloudinary
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-temporary-key-change-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,10 +52,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'kario.wsgi.application'
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://kario_user:w2kt4eAgppJWclO3SfykuZh1JpJe356s@dpg-d43sb72dbo4c73b00jb0-a.oregon-postgres.render.com/kario',
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
