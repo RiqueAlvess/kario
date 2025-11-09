@@ -328,7 +328,7 @@ def import_vehicles_from_csv(csv_file_path):
 
                 # Determinar status do título
 
-                title_status = 'LIMPO' if clean_title and clean_title.upper() == 'YES' else 'NAO_LIMPO'
+                title_status = 'LIMPO' if clean_title and clean_title.upper() == 'YES' else 'REBUILT'
 
  
 
@@ -386,7 +386,7 @@ def import_vehicles_from_csv(csv_file_path):
 
                     title_status=title_status,
 
-                    title_problem_description='' if title_status == 'LIMPO' else 'Verificar documentação',
+                    title_problem_description='' if title_status == 'LIMPO' else 'Título Rebuilt - Verificar documentação',
 
                     value=value,
 
