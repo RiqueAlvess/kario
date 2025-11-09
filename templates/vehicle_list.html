@@ -12,18 +12,18 @@
 
 <form method="GET" class="mb-3">
     <div class="input-group mb-2">
-        <input type="text" name="search" class="form-control" placeholder="Buscar por marca, modelo ou VIN..." value="{{ search }}">
+        <input type="text" name="search" class="form-control" placeholder="Buscar por marca, modelo ou VIN..." value="{{ filter.form.search.value|default:'' }}">
         <button type="submit" class="btn btn-primary">
             <i class="bi bi-search"></i>
         </button>
     </div>
-    
+
     <div class="row g-2">
         <div class="col-6">
             <select name="make" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">Todas Marcas</option>
                 {% for make in makes %}
-                <option value="{{ make }}" {% if make == make_filter %}selected{% endif %}>{{ make }}</option>
+                <option value="{{ make }}" {% if make == filter.form.make.value %}selected{% endif %}>{{ make }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -31,41 +31,55 @@
             <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">Todos Anos</option>
                 {% for year in years %}
-                <option value="{{ year }}" {% if year|stringformat:"s" == year_filter %}selected{% endif %}>{{ year }}</option>
+                <option value="{{ year }}" {% if year|stringformat:"s" == filter.form.year.value|default:""|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
                 {% endfor %}
+            </select>
+        </div>
+        <div class="col-6">
+            <select name="car_type" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Todos Tipos</option>
+                <option value="SEDAN" {% if filter.form.car_type.value == 'SEDAN' %}selected{% endif %}>Sedan</option>
+                <option value="SUV" {% if filter.form.car_type.value == 'SUV' %}selected{% endif %}>SUV</option>
+                <option value="TRUCK" {% if filter.form.car_type.value == 'TRUCK' %}selected{% endif %}>Truck</option>
+                <option value="COUPE" {% if filter.form.car_type.value == 'COUPE' %}selected{% endif %}>Coupe</option>
+                <option value="HATCHBACK" {% if filter.form.car_type.value == 'HATCHBACK' %}selected{% endif %}>Hatchback</option>
+                <option value="VAN" {% if filter.form.car_type.value == 'VAN' %}selected{% endif %}>Van</option>
+                <option value="WAGON" {% if filter.form.car_type.value == 'WAGON' %}selected{% endif %}>Wagon</option>
+                <option value="CONVERTIBLE" {% if filter.form.car_type.value == 'CONVERTIBLE' %}selected{% endif %}>Conversível</option>
+                <option value="OUTROS" {% if filter.form.car_type.value == 'OUTROS' %}selected{% endif %}>Outros</option>
             </select>
         </div>
         <div class="col-6">
             <select name="title_status" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">Todos Títulos</option>
-                <option value="LIMPO" {% if title_filter == 'LIMPO' %}selected{% endif %}>Limpo</option>
-                <option value="SALVAGE" {% if title_filter == 'SALVAGE' %}selected{% endif %}>Salvage</option>
-                <option value="REBUILT" {% if title_filter == 'REBUILT' %}selected{% endif %}>Rebuilt</option>
-                <option value="OUTROS" {% if title_filter == 'OUTROS' %}selected{% endif %}>Outros</option>
+                <option value="LIMPO" {% if filter.form.title_status.value == 'LIMPO' %}selected{% endif %}>Limpo</option>
+                <option value="SALVAGE" {% if filter.form.title_status.value == 'SALVAGE' %}selected{% endif %}>Salvage</option>
+                <option value="REBUILT" {% if filter.form.title_status.value == 'REBUILT' %}selected{% endif %}>Rebuilt</option>
+                <option value="OUTROS" {% if filter.form.title_status.value == 'OUTROS' %}selected{% endif %}>Outros</option>
             </select>
         </div>
         <div class="col-6">
             <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">Todos Status</option>
-                <option value="FALTA_INSPECAO" {% if status_filter == 'FALTA_INSPECAO' %}selected{% endif %}>Falta Inspeção</option>
-                <option value="DISPONIVEL" {% if status_filter == 'DISPONIVEL' %}selected{% endif %}>Disponível</option>
-                <option value="MECANICA" {% if status_filter == 'MECANICA' %}selected{% endif %}>Mecânica</option>
-                <option value="VENDIDO" {% if status_filter == 'VENDIDO' %}selected{% endif %}>Vendido</option>
+                <option value="FALTA_INSPECAO" {% if filter.form.status.value == 'FALTA_INSPECAO' %}selected{% endif %}>Falta Inspeção</option>
+                <option value="DISPONIVEL" {% if filter.form.status.value == 'DISPONIVEL' %}selected{% endif %}>Disponível</option>
+                <option value="MECANICA" {% if filter.form.status.value == 'MECANICA' %}selected{% endif %}>Mecânica</option>
+                <option value="VENDIDO" {% if filter.form.status.value == 'VENDIDO' %}selected{% endif %}>Vendido</option>
             </select>
         </div>
         <div class="col-6">
-            <input type="number" name="value_min" class="form-control form-control-sm" placeholder="Valor mín ($)" value="{{ value_min }}" step="0.01">
+            <input type="number" name="value_min" class="form-control form-control-sm" placeholder="Valor mín ($)" value="{{ filter.form.value_min.value|default:'' }}" step="0.01">
         </div>
         <div class="col-6">
-            <input type="number" name="value_max" class="form-control form-control-sm" placeholder="Valor máx ($)" value="{{ value_max }}" step="0.01">
+            <input type="number" name="value_max" class="form-control form-control-sm" placeholder="Valor máx ($)" value="{{ filter.form.value_max.value|default:'' }}" step="0.01">
         </div>
     </div>
-    
+
     <div class="mt-2 d-flex gap-2">
         <button type="submit" class="btn btn-sm btn-primary">
             <i class="bi bi-funnel"></i> Filtrar
         </button>
-        {% if search or make_filter or year_filter or title_filter or status_filter or value_min or value_max %}
+        {% if request.GET %}
         <a href="{% url 'vehicle_list' %}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-x"></i> Limpar
         </a>

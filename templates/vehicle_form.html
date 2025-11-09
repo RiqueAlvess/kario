@@ -44,15 +44,30 @@
         <div class="card-header"><strong>Especificações</strong></div>
         <div class="card-body">
             <div class="mb-3">
+                <label class="form-label">Tipo de Carro *</label>
+                <select name="car_type" class="form-select" required>
+                    <option value="SEDAN" {% if vehicle.car_type == 'SEDAN' %}selected{% endif %}>Sedan</option>
+                    <option value="SUV" {% if vehicle.car_type == 'SUV' %}selected{% endif %}>SUV</option>
+                    <option value="TRUCK" {% if vehicle.car_type == 'TRUCK' %}selected{% endif %}>Truck</option>
+                    <option value="COUPE" {% if vehicle.car_type == 'COUPE' %}selected{% endif %}>Coupe</option>
+                    <option value="HATCHBACK" {% if vehicle.car_type == 'HATCHBACK' %}selected{% endif %}>Hatchback</option>
+                    <option value="VAN" {% if vehicle.car_type == 'VAN' %}selected{% endif %}>Van</option>
+                    <option value="WAGON" {% if vehicle.car_type == 'WAGON' %}selected{% endif %}>Wagon</option>
+                    <option value="CONVERTIBLE" {% if vehicle.car_type == 'CONVERTIBLE' %}selected{% endif %}>Conversível</option>
+                    <option value="OUTROS" {% if vehicle.car_type == 'OUTROS' or not vehicle %}selected{% endif %}>Outros</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
                 <label class="form-label">Motor</label>
                 <input type="text" name="engine" class="form-control" value="{% if vehicle %}{{ vehicle.engine }}{% else %}{{ vehicle_data.engine }}{% endif %}">
             </div>
-            
+
             <div class="mb-3">
                 <label class="form-label">Transmissão</label>
                 <input type="text" name="transmission" class="form-control" value="{% if vehicle %}{{ vehicle.transmission }}{% else %}{{ vehicle_data.transmission }}{% endif %}">
             </div>
-            
+
             <div class="mb-3">
                 <label class="form-label">Tração</label>
                 <input type="text" name="train" class="form-control" value="{% if vehicle %}{{ vehicle.train }}{% endif %}">
@@ -64,8 +79,8 @@
                     <input type="text" name="exterior_color" class="form-control" value="{% if vehicle %}{{ vehicle.exterior_color }}{% endif %}" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Cor Interna *</label>
-                    <input type="text" name="interior_color" class="form-control" value="{% if vehicle %}{{ vehicle.interior_color }}{% endif %}" required>
+                    <label class="form-label">Cor Interna</label>
+                    <input type="text" name="interior_color" class="form-control" value="{% if vehicle %}{{ vehicle.interior_color }}{% endif %}">
                 </div>
             </div>
             

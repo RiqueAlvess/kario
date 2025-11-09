@@ -7,40 +7,52 @@
 
 <div class="row">
     <div class="col-6 col-md-4">
-        <div class="card stat-card bg-success text-white">
-            <h3>{{ totals.disponivel }}</h3>
-            <p class="text-white fw-bold">Disponível</p>
-        </div>
+        <a href="{% url 'vehicle_list' %}?status=DISPONIVEL" class="text-decoration-none">
+            <div class="card stat-card bg-success text-white clickable-card">
+                <h3>{{ totals.disponivel }}</h3>
+                <p class="text-white fw-bold">Disponível</p>
+            </div>
+        </a>
     </div>
     <div class="col-6 col-md-4">
-        <div class="card stat-card bg-info text-white">
-            <h3>{{ totals.falta_inspecao }}</h3>
-            <p class="text-white fw-bold">Falta Inspeção</p>
-        </div>
+        <a href="{% url 'vehicle_list' %}?status=FALTA_INSPECAO" class="text-decoration-none">
+            <div class="card stat-card bg-info text-white clickable-card">
+                <h3>{{ totals.falta_inspecao }}</h3>
+                <p class="text-white fw-bold">Falta Inspeção</p>
+            </div>
+        </a>
     </div>
     <div class="col-6 col-md-4">
-        <div class="card stat-card bg-warning text-dark">
-            <h3>{{ totals.mecanica }}</h3>
-            <p class="text-dark fw-bold">Mecânica</p>
-        </div>
+        <a href="{% url 'vehicle_list' %}?status=MECANICA" class="text-decoration-none">
+            <div class="card stat-card bg-warning text-dark clickable-card">
+                <h3>{{ totals.mecanica }}</h3>
+                <p class="text-dark fw-bold">Mecânica</p>
+            </div>
+        </a>
     </div>
     <div class="col-6 col-md-4">
-        <div class="card stat-card bg-danger text-white">
-            <h3>{{ totals.vendido }}</h3>
-            <p class="text-white fw-bold">Vendido</p>
-        </div>
+        <a href="{% url 'vehicle_list' %}?status=VENDIDO" class="text-decoration-none">
+            <div class="card stat-card bg-danger text-white clickable-card">
+                <h3>{{ totals.vendido }}</h3>
+                <p class="text-white fw-bold">Vendido</p>
+            </div>
+        </a>
     </div>
     <div class="col-6 col-md-4">
-        <div class="card stat-card bg-primary text-white">
-            <h3>{{ totals.limpo }}</h3>
-            <p class="text-white fw-bold">Título Limpo</p>
-        </div>
+        <a href="{% url 'vehicle_list' %}?title_status=LIMPO" class="text-decoration-none">
+            <div class="card stat-card bg-primary text-white clickable-card">
+                <h3>{{ totals.limpo }}</h3>
+                <p class="text-white fw-bold">Título Limpo</p>
+            </div>
+        </a>
     </div>
     <div class="col-6 col-md-4">
-        <div class="card stat-card bg-secondary text-white">
-            <h3>{{ totals.nao_limpo }}</h3>
-            <p class="text-white fw-bold">Título Problema</p>
-        </div>
+        <a href="{% url 'vehicle_list' %}?title_status=SALVAGE&title_status=REBUILT&title_status=OUTROS" class="text-decoration-none">
+            <div class="card stat-card bg-secondary text-white clickable-card">
+                <h3>{{ totals.nao_limpo }}</h3>
+                <p class="text-white fw-bold">Título Problema</p>
+            </div>
+        </a>
     </div>
 </div>
 
@@ -51,6 +63,19 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .clickable-card {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .clickable-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
