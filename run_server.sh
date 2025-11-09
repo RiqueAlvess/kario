@@ -26,10 +26,12 @@ echo ""
 # Rodar Gunicorn
 # - bind 0.0.0.0:8000 permite acesso de qualquer IP na rede
 # - workers 3 define 3 processos workers
+# - timeout 120 aumenta timeout para requisições longas (decode VIN, etc)
 # - reload recarrega automaticamente quando o código muda
 gunicorn kario.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers 3 \
+    --timeout 120 \
     --reload \
     --access-logfile - \
     --error-logfile -

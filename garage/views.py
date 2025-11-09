@@ -144,12 +144,23 @@ def vehicle_add(request):
     vehicle_data = request.session.get('vehicle_data', {})
 
     if request.method == 'POST':
+        vin = request.POST.get('vin', '').strip()
+
+        # Verificar se VIN já existe
+        if vin and Vehicle.objects.filter(vin=vin).exists():
+            messages.error(request, f'VIN {vin} já existe no sistema! Use um VIN diferente ou deixe vazio.')
+            return render(request, 'vehicle_form.html', {'vehicle_data': vehicle_data})
+
+        # Se VIN estiver vazio, converter para None
+        if not vin:
+            vin = None
+
         vehicle = Vehicle.objects.create(
             year=request.POST.get('year'),
             make=request.POST.get('make'),
             model=request.POST.get('model'),
             trim=request.POST.get('trim', ''),
-            vin=request.POST.get('vin', ''),
+            vin=vin,
             engine=request.POST.get('engine', ''),
             transmission=request.POST.get('transmission', ''),
             train=request.POST.get('train', ''),
