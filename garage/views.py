@@ -11,7 +11,9 @@ import cloudinary.uploader
 from .models import Vehicle, InspectionTemplate, VehicleInspection, Photo, Sale
 from .filters import VehicleFilter
 from googleapiclient.discovery import build
-from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 import os
 from pathlib import Path
 import json
@@ -19,20 +21,50 @@ import json
 # Google Drive setup
 BASE_DIR = Path(__file__).resolve().parent.parent
 GOOGLE_DRIVE_FOLDER_ID = '1uWYLWudLgN0MDB94beKdKIQKcwYMwP3j'
-SERVICE_ACCOUNT_FILE = BASE_DIR / 'api0-450008-858cfa3a3501.json'
+CLIENT_SECRET_FILE = BASE_DIR / 'client_secret_74999281138-kop5n416pehjtrumlq3vrcvk7rmmjaeu.apps.googleusercontent.com.json'
+TOKEN_FILE = BASE_DIR / 'token.json'
+
+# Scopes para Google Drive (leitura e escrita de arquivos e fotos)
+SCOPES = [
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/drive.photos.readonly'
+]
 
 def get_drive_service():
-    """Get authenticated Google Drive service"""
+    """Get authenticated Google Drive service using OAuth 2.0 for Desktop Apps"""
+    creds = None
+
     try:
-        if not SERVICE_ACCOUNT_FILE.exists():
-            return None
-        credentials = service_account.Credentials.from_service_account_file(
-            str(SERVICE_ACCOUNT_FILE),
-            scopes=['https://www.googleapis.com/auth/drive']
-        )
-        return build('drive', 'v3', credentials=credentials)
+        # Verifica se já existe um token salvo
+        if TOKEN_FILE.exists():
+            creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
+
+        # Se não há credenciais válidas, faz o login
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                # Refresh token se expirado
+                creds.refresh(Request())
+            else:
+                # Inicia o fluxo OAuth 2.0 para desktop
+                if not CLIENT_SECRET_FILE.exists():
+                    print(f"Arquivo de credenciais não encontrado: {CLIENT_SECRET_FILE}")
+                    return None
+
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    str(CLIENT_SECRET_FILE), SCOPES)
+                # run_local_server abre o navegador e espera a autorização
+                creds = flow.run_local_server(port=0)
+
+            # Salva as credenciais para a próxima execução
+            with open(TOKEN_FILE, 'w') as token:
+                token.write(creds.to_json())
+
+        # Retorna o serviço do Google Drive autenticado
+        return build('drive', 'v3', credentials=creds)
+
     except Exception as e:
-        print(f"Error initializing Google Drive: {e}")
+        print(f"Error initializing Google Drive with OAuth 2.0: {e}")
         return None
 
 def is_staff_user(user):
