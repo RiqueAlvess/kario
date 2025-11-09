@@ -34,11 +34,6 @@ db.sqlite3-journal
 media/
 staticfiles/
 
-# Google OAuth 2.0 credentials
-token.json
-client_secret_*.json
-api0-*.json
-
 # Environment variables
 .env
 .env.local

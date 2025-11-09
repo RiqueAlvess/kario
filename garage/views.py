@@ -10,62 +10,22 @@ import csv
 import cloudinary.uploader
 from .models import Vehicle, InspectionTemplate, VehicleInspection, Photo, Sale
 from .filters import VehicleFilter
-from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 import os
 from pathlib import Path
-import json
+import shutil
 
-# Google Drive setup
+# Local storage setup
 BASE_DIR = Path(__file__).resolve().parent.parent
-GOOGLE_DRIVE_FOLDER_ID = '1uWYLWudLgN0MDB94beKdKIQKcwYMwP3j'
-CLIENT_SECRET_FILE = BASE_DIR / 'client_secret_74999281138-kop5n416pehjtrumlq3vrcvk7rmmjaeu.apps.googleusercontent.com.json'
-TOKEN_FILE = BASE_DIR / 'token.json'
+LOCAL_IMAGES_DIR = Path("C:/imagens_kario")
 
-# Scopes para Google Drive (leitura e escrita de arquivos e fotos)
-SCOPES = [
-    'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/drive.file',
-    'https://www.googleapis.com/auth/drive.photos.readonly'
-]
-
-def get_drive_service():
-    """Get authenticated Google Drive service using OAuth 2.0 for Desktop Apps"""
-    creds = None
-
+def ensure_local_images_dir():
+    """Ensure local images directory exists"""
     try:
-        # Verifica se já existe um token salvo
-        if TOKEN_FILE.exists():
-            creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
-
-        # Se não há credenciais válidas, faz o login
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                # Refresh token se expirado
-                creds.refresh(Request())
-            else:
-                # Inicia o fluxo OAuth 2.0 para desktop
-                if not CLIENT_SECRET_FILE.exists():
-                    print(f"Arquivo de credenciais não encontrado: {CLIENT_SECRET_FILE}")
-                    return None
-
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    str(CLIENT_SECRET_FILE), SCOPES)
-                # run_local_server abre o navegador e espera a autorização
-                creds = flow.run_local_server(port=0)
-
-            # Salva as credenciais para a próxima execução
-            with open(TOKEN_FILE, 'w') as token:
-                token.write(creds.to_json())
-
-        # Retorna o serviço do Google Drive autenticado
-        return build('drive', 'v3', credentials=creds)
-
+        LOCAL_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+        return True
     except Exception as e:
-        print(f"Error initializing Google Drive with OAuth 2.0: {e}")
-        return None
+        print(f"Error creating local images directory: {e}")
+        return False
 
 def is_staff_user(user):
     """Check if user is staff (admin) to allow modifications"""
@@ -342,64 +302,51 @@ def inspection_update(request, pk):
     inspections = vehicle.inspections.select_related('template').order_by('template__order')
     return render(request, 'inspection_form.html', {'vehicle': vehicle, 'inspections': inspections})
 
-def get_or_create_drive_folder(service, vehicle):
+def save_image_locally(file, vehicle, filename):
     """
-    Create or get Google Drive folder for vehicle
-    Folder name format: Nome_Modelo_Ano (e.g., Toyota_Camry_2020)
+    Save image to local directory C:/imagens_kario/
+    Filename format: NomeCarro_Ano_Modelo_originalname.ext
+    Returns the local file path or None if failed
     """
-    folder_name = f"{vehicle.make}_{vehicle.model}_{vehicle.year}"
-
-    # Search for existing folder
-    query = f"name='{folder_name}' and '{GOOGLE_DRIVE_FOLDER_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"
     try:
-        results = service.files().list(q=query, fields='files(id, name)').execute()
-        folders = results.get('files', [])
+        # Ensure directory exists
+        if not ensure_local_images_dir():
+            return None
 
-        if folders:
-            return folders[0]['id']
+        # Create filename: NomeCarro_Ano_Modelo_originalname.ext
+        # Clean vehicle name for filename
+        clean_make = vehicle.make.replace(' ', '_').replace('/', '_')
+        clean_model = vehicle.model.replace(' ', '_').replace('/', '_')
 
-        # Create new folder
-        folder_metadata = {
-            'name': folder_name,
-            'mimeType': 'application/vnd.google-apps.folder',
-            'parents': [GOOGLE_DRIVE_FOLDER_ID]
-        }
-        folder = service.files().create(body=folder_metadata, fields='id').execute()
-        return folder.get('id')
+        # Get file extension
+        file_ext = os.path.splitext(filename)[1]
+        base_name = os.path.splitext(filename)[0]
+
+        # Create new filename
+        new_filename = f"{clean_make}_{vehicle.year}_{clean_model}_{base_name}{file_ext}"
+
+        # Full path
+        file_path = LOCAL_IMAGES_DIR / new_filename
+
+        # Save file
+        with open(file_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+
+        return str(file_path)
     except Exception as e:
-        print(f"Error creating/getting Google Drive folder: {e}")
+        print(f"Error saving file locally: {e}")
         return None
 
-def upload_to_drive(service, file, folder_id, filename):
-    """Upload file to Google Drive"""
+def delete_local_image(file_path):
+    """Delete image from local storage"""
     try:
-        from googleapiclient.http import MediaIoBaseUpload
-        import io
-
-        # Reset file pointer
-        file.seek(0)
-
-        file_metadata = {
-            'name': filename,
-            'parents': [folder_id]
-        }
-
-        media = MediaIoBaseUpload(
-            io.BytesIO(file.read()),
-            mimetype=file.content_type,
-            resumable=True
-        )
-
-        uploaded_file = service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields='id, webViewLink'
-        ).execute()
-
-        return uploaded_file.get('id')
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+            return True
     except Exception as e:
-        print(f"Error uploading to Google Drive: {e}")
-        return None
+        print(f"Error deleting local file: {e}")
+    return False
 
 @login_required
 @user_passes_test(is_staff_user, login_url='/dashboard/')
@@ -410,33 +357,27 @@ def photo_upload(request, pk):
         files = request.FILES.getlist('photos')
         description = request.POST.get('description', '')
 
-        # Initialize Google Drive service
-        drive_service = get_drive_service()
-        drive_folder_id = None
-
-        if drive_service:
-            drive_folder_id = get_or_create_drive_folder(drive_service, vehicle)
-
         for file in files:
             try:
-                # Upload to Cloudinary
+                # Save to local storage
+                local_path = save_image_locally(file, vehicle, file.name)
+
+                if not local_path:
+                    messages.error(request, f'Erro ao salvar imagem localmente: {file.name}')
+                    continue
+
+                # Upload to Cloudinary (keeping this for web viewing)
                 upload_result = cloudinary.uploader.upload(
                     file,
                     folder=f"kario_garage/vehicles/{vehicle.id}",
                     resource_type="auto"
                 )
 
-                google_drive_id = None
-
-                # Upload to Google Drive
-                if drive_service and drive_folder_id:
-                    google_drive_id = upload_to_drive(drive_service, file, drive_folder_id, file.name)
-
                 Photo.objects.create(
                     vehicle=vehicle,
                     image_url=upload_result['secure_url'],
                     cloudinary_public_id=upload_result['public_id'],
-                    google_drive_id=google_drive_id,
+                    google_drive_id=local_path,  # Storing local path in this field now
                     description=description,
                     uploaded_by=request.user
                 )
@@ -444,7 +385,7 @@ def photo_upload(request, pk):
                 messages.error(request, f'Erro ao fazer upload da imagem: {str(e)}')
                 continue
 
-        messages.success(request, f'{len(files)} foto(s) adicionada(s)!')
+        messages.success(request, f'{len(files)} foto(s) adicionada(s) e salvas em C:/imagens_kario/')
         return redirect('vehicle_detail', pk=vehicle.id)
 
     return render(request, 'photo_upload.html', {'vehicle': vehicle})
@@ -461,14 +402,9 @@ def photo_delete(request, pk):
     except Exception as e:
         messages.warning(request, f'Foto removida do banco, mas erro ao deletar do Cloudinary: {str(e)}')
 
-    # Delete from Google Drive if exists
-    if photo.google_drive_id:
-        try:
-            drive_service = get_drive_service()
-            if drive_service:
-                drive_service.files().delete(fileId=photo.google_drive_id).execute()
-        except Exception as e:
-            print(f"Error deleting from Google Drive: {e}")
+    # Delete from local storage if exists
+    if photo.google_drive_id:  # This field now stores local path
+        delete_local_image(photo.google_drive_id)
 
     photo.delete()
     messages.success(request, 'Foto removida!')
