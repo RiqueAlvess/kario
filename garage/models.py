@@ -9,11 +9,23 @@ class Vehicle(models.Model):
         ('VENDIDO', 'Vendido'),
         ('MECANICA', 'Em Mecânica'),
     ]
-    
+
     TITLE_STATUS_CHOICES = [
         ('LIMPO', 'Limpo'),
         ('SALVAGE', 'Salvage'),
         ('REBUILT', 'Rebuilt'),
+        ('OUTROS', 'Outros'),
+    ]
+
+    CAR_TYPE_CHOICES = [
+        ('SEDAN', 'Sedan'),
+        ('SUV', 'SUV'),
+        ('TRUCK', 'Truck'),
+        ('COUPE', 'Coupe'),
+        ('HATCHBACK', 'Hatchback'),
+        ('VAN', 'Van'),
+        ('WAGON', 'Wagon'),
+        ('CONVERTIBLE', 'Conversível'),
         ('OUTROS', 'Outros'),
     ]
     
@@ -26,8 +38,9 @@ class Vehicle(models.Model):
     engine = models.CharField(max_length=200, blank=True, null=True)
     transmission = models.CharField(max_length=100, blank=True, null=True)
     train = models.CharField(max_length=50, blank=True, null=True)
+    car_type = models.CharField(max_length=20, choices=CAR_TYPE_CHOICES, default='OUTROS', verbose_name='Tipo de Carro')
     exterior_color = models.CharField(max_length=50)
-    interior_color = models.CharField(max_length=50)
+    interior_color = models.CharField(max_length=50, blank=True, null=True)
     miles = models.IntegerField()
     mpg = models.CharField(max_length=50, blank=True, null=True)
     title_status = models.CharField(max_length=20, choices=TITLE_STATUS_CHOICES, default='LIMPO')
@@ -37,6 +50,7 @@ class Vehicle(models.Model):
     general_notes = models.TextField(blank=True, null=True, verbose_name='Observações Gerais')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_vehicles', verbose_name='Atualizado por')
     
     class Meta:
         ordering = ['-created_at']
@@ -92,8 +106,10 @@ class Photo(models.Model):
     inspection = models.ForeignKey(VehicleInspection, on_delete=models.CASCADE, related_name='photos', null=True, blank=True)
     image_url = models.URLField(max_length=500)
     cloudinary_public_id = models.CharField(max_length=255, blank=True, null=True)
+    google_drive_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='ID do Google Drive')
     description = models.CharField(max_length=200, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='uploaded_photos', verbose_name='Enviado por')
     
     def __str__(self):
         return f"Photo {self.id}"
