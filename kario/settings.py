@@ -16,6 +16,7 @@ else:
     ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -97,3 +98,15 @@ cloudinary.config(
     api_secret="yFosuERlsbaky-QBdUXkHwtFkWo",
     secure=True
 )
+
+# Unfold Admin Configuration
+UNFOLD = {
+    "SITE_TITLE": "KA Rio Admin",
+    "SITE_HEADER": "KA Rio Admin",
+    "SITE_URL": "/",
+    "SITE_ICON": None,
+    "SITE_LOGO": None,
+    "SITE_SYMBOL": "speed",
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+}
